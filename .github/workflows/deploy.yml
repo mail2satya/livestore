@@ -9,42 +9,42 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
-      with:
-        fetch-depth: 0  # Ensures full history for proper versioning
 
     - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
-        node-version: 20  # Required for @sap/cds
-        cache: 'npm'  # Caches node_modules for faster builds
+        node-version: 20
+        cache: 'npm'
 
-    - name: Install global dependencies
+    - name: Install dependencies
       run: |
-        npm install -g @sap/cds-dk mbt  # Install required global tools
-        npm ci  # Clean install from lockfile
+        npm install -g @sap/cds-dk mbt
+        npm ci
+
+    - name: Validate MTA
+      run: |
+        if [ ! -f mta.yaml ]; then
+          echo "ERROR: mta.yaml file is missing!"
+          exit 1
+        fi
+        # Validate required fields
+        grep -q "_schema-version" mta.yaml || (echo "Missing _schema-version" && exit 1)
+        grep -q "ID:" mta.yaml || (echo "Missing ID" && exit 1)
+        grep -q "version:" mta.yaml || (echo "Missing version" && exit 1)
 
     - name: Build project
       run: |
-        cds build --production  # Build CAP project
-        mbt build -p=cf --mtar=mta_archives/app.mtar  # Build MTA archive
+        cds build --production
+        mbt build -p=cf --mtar=mta_archives/livestore.mtar
 
-    - name: Verify build artifacts
-      run: |
-        ls -la mta_archives/  # Debug: List built MTAR
-        file mta_archives/app.mtar  # Verify MTAR format
-
-    - name: Install Cloud Foundry CLI
+    - name: Install CF CLI
       run: |
         wget -q -O - https://packages.cloudfoundry.org/debian/cli.cloudfoundry.org.key | sudo apt-key add -
         echo "deb https://packages.cloudfoundry.org/debian stable main" | sudo tee /etc/apt/sources.list.d/cloudfoundry-cli.list
         sudo apt update
         sudo apt install cf8-cli
-
-    - name: Install MTA plugin
-      run: |
         cf add-plugin-repo CF-Community https://plugins.cloudfoundry.org
         cf install-plugin -f -r CF-Community "multiapps"
-        cf plugins  # Verify plugin installation
 
     - name: Deploy to Cloud Foundry
       env:
@@ -54,11 +54,5 @@ jobs:
         CF_USERNAME: ${{ secrets.CF_USERNAME }}
         CF_PASSWORD: ${{ secrets.CF_PASSWORD }}
       run: |
-        echo "Logging in to Cloud Foundry..."
         cf login -a "$CF_API" -u "$CF_USERNAME" -p "$CF_PASSWORD" -o "$CF_ORG" -s "$CF_SPACE"
-        
-        echo "Deploying MTA archive..."
-        cf deploy mta_archives/app.mtar -f
-        
-        echo "Checking deployment status..."
-        cf apps
+        cf deploy mta_archives/livestore.mtar -f

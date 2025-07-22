@@ -1,7 +1,11 @@
+_schema-version: '3.3'
+ID: livestore
+version: 1.0.0
+
 modules:
-  - name: products-ui
+  - name: app-router
     type: html5
-    path: app/products
+    path: app
     parameters:
       disk-quota: 256M
       memory: 256M
@@ -10,14 +14,6 @@ modules:
       commands:
         - npm install
         - npm run build
-      supported-platforms: []
-    requires:
-      - name: srv-api
-        group: destinations
-        properties:
-          name: srv_api
-          url: ~{url}
-          forwardAuthToken: true
 
   - name: srv
     type: nodejs
@@ -25,7 +21,20 @@ modules:
     parameters:
       disk-quota: 256M
       memory: 256M
-    provides:
-      - name: srv-api
-        properties:
-          url: '${default-url}'
+    requires:
+      - name: livestore-uaa
+      - name: livestore-db
+
+resources:
+  - name: livestore-uaa
+    type: org.cloudfoundry.managed-service
+    parameters:
+      service: xsuaa
+      service-plan: application
+      path: ./xs-security.json
+
+  - name: livestore-db
+    type: org.cloudfoundry.managed-service
+    parameters:
+      service: hana
+      service-plan: hdi-shared
