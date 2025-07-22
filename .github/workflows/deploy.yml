@@ -9,32 +9,26 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
-
-    # UPDATE THIS SECTION
-    - name: Setup Node.js
-      uses: actions/setup-node@v4  # Update to v4
       with:
-        node-version: 20  # Change to Node 20
+        # Add this to fetch lock files
+        fetch-depth: 0
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: 20
+        # Cache dependencies to speed up install
         cache: 'npm'
 
     - name: Install dependencies
       run: |
-        npm install -g @sap/cds-dk  # Install CDS globally
-        npm install
+        npm install -g @sap/cds-dk
+        npm ci # Use npm ci instead of npm install
 
-    
     - name: Build project
-      run: |
-        cds build --production
-        cd app/products
-        npm install
-        npm run build
+      run: npx cds build --production
 
-    - name: Generate MTAR
-      run: |
-        npm install -g mbt
-        mbt build -p=cf
-
+    # Rest of your workflow remains the same
     - name: Install CF CLI
       run: |
         wget -q -O - https://packages.cloudfoundry.org/debian/cli.cloudfoundry.org.key | sudo apt-key add -
