@@ -10,16 +10,19 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
+    # UPDATE THIS SECTION
     - name: Setup Node.js
-      uses: actions/setup-node@v3
+      uses: actions/setup-node@v4  # Update to v4
       with:
-        node-version: 18
+        node-version: 20  # Change to Node 20
+        cache: 'npm'
 
     - name: Install dependencies
       run: |
-        npm install -g @sap/cds-dk
+        npm install -g @sap/cds-dk  # Install CDS globally
         npm install
 
+    
     - name: Build project
       run: |
         cds build --production
