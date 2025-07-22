@@ -10,6 +10,12 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
+    - name: Prepare Node.js service
+      run: |
+      cd srv
+      npm install
+      cd ..
+
     - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
