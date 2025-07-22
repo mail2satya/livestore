@@ -1,0 +1,8 @@
+{
+    "name": "livestore-ui",
+    "version": "1.0.0",
+    "scripts": {
+      "build": "mkdir -p dist && cp -r webapp/* dist/",
+      "start": "echo 'HTML app ready'"
+    }
+  }

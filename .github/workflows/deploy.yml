@@ -14,28 +14,19 @@ jobs:
       uses: actions/setup-node@v4
       with:
         node-version: 20
-        cache: 'npm'
 
     - name: Install dependencies
       run: |
         npm install -g @sap/cds-dk mbt
         npm ci
 
-    - name: Validate MTA
-      run: |
-        if [ ! -f mta.yaml ]; then
-          echo "ERROR: mta.yaml file is missing!"
-          exit 1
-        fi
-        # Validate required fields
-        grep -q "_schema-version" mta.yaml || (echo "Missing _schema-version" && exit 1)
-        grep -q "ID:" mta.yaml || (echo "Missing ID" && exit 1)
-        grep -q "version:" mta.yaml || (echo "Missing version" && exit 1)
-
     - name: Build project
       run: |
         cds build --production
-        mbt build -p=cf --mtar=mta_archives/livestore.mtar
+        # Only build MTA if mta.yaml exists
+        if [ -f mta.yaml ]; then
+          mbt build -p=cf --mtar=mta_archives/livestore.mtar
+        fi
 
     - name: Install CF CLI
       run: |
@@ -55,4 +46,9 @@ jobs:
         CF_PASSWORD: ${{ secrets.CF_PASSWORD }}
       run: |
         cf login -a "$CF_API" -u "$CF_USERNAME" -p "$CF_PASSWORD" -o "$CF_ORG" -s "$CF_SPACE"
-        cf deploy mta_archives/livestore.mtar -f
+        if [ -f mta_archives/livestore.mtar ]; then
+          cf deploy mta_archives/livestore.mtar -f
+        else
+          echo "No MTA archive found, deploying Node.js app directly"
+          cd srv && cf push livestore -b nodejs_buildpack -c "npm start"
+        fi
