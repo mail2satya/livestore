@@ -1,0 +1,47 @@
+{
+  "name": "livestore",
+  "version": "1.0.0",
+  "description": "A simple CAP project.",
+  "repository": "<Add your repository here>",
+  "license": "UNLICENSED",
+  "private": true,
+  "dependencies": {
+    "@cap-js/audit-logging": ">=0",
+    "@cap-js/hana": "^2",
+    "@cap-js/notifications": "*",
+    "@sap/cds": "^9",
+    "@sap/ux-ui5-tooling": "^1.18.3",
+    "@sap/xssec": "^4",
+    "express": "^4"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "devDependencies": {
+    "@cap-js/cds-types": "^0.13.0",
+    "@cap-js/sqlite": "^2",
+    "@sap/cds-dk": "^9.1.1"
+  },
+  "scripts": {
+    "start": "cds-serve"
+  },
+  "cds": {
+    "model": [
+      "db",
+      "srv"
+    ],
+    "requires": {
+      "[production]": {
+        "auth": "xsuaa"
+      },
+      "messaging": {
+        "kind": "enterprise-messaging"
+      },
+      "connectivity": true,
+      "destinations": true,
+      "html5-runtime": true,
+      "portal": true,
+      "application-logging": true
+    }
+  }
+}

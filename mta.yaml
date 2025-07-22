@@ -1,0 +1,31 @@
+modules:
+  - name: products-ui
+    type: html5
+    path: app/products
+    parameters:
+      disk-quota: 256M
+      memory: 256M
+    build-parameters:
+      builder: custom
+      commands:
+        - npm install
+        - npm run build
+      supported-platforms: []
+    requires:
+      - name: srv-api
+        group: destinations
+        properties:
+          name: srv_api
+          url: ~{url}
+          forwardAuthToken: true
+
+  - name: srv
+    type: nodejs
+    path: srv
+    parameters:
+      disk-quota: 256M
+      memory: 256M
+    provides:
+      - name: srv-api
+        properties:
+          url: '${default-url}'
