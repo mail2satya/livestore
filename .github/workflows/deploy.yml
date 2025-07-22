@@ -10,37 +10,41 @@ jobs:
     steps:
     - uses: actions/checkout@v4
       with:
-        # Add this to fetch lock files
-        fetch-depth: 0
+        fetch-depth: 0  # Ensures full history for proper versioning
 
     - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
-        node-version: 20
-        # Cache dependencies to speed up install
-        cache: 'npm'
+        node-version: 20  # Required for @sap/cds
+        cache: 'npm'  # Caches node_modules for faster builds
 
-    - name: Install dependencies
+    - name: Install global dependencies
       run: |
-        npm install -g @sap/cds-dk
-        npm ci # Use npm ci instead of npm install
+        npm install -g @sap/cds-dk mbt  # Install required global tools
+        npm ci  # Clean install from lockfile
 
     - name: Build project
-      run: npx cds build --production
+      run: |
+        cds build --production  # Build CAP project
+        mbt build -p=cf --mtar=mta_archives/app.mtar  # Build MTA archive
 
-    # Rest of your workflow remains the same
-    - name: Install CF CLI
+    - name: Verify build artifacts
+      run: |
+        ls -la mta_archives/  # Debug: List built MTAR
+        file mta_archives/app.mtar  # Verify MTAR format
+
+    - name: Install Cloud Foundry CLI
       run: |
         wget -q -O - https://packages.cloudfoundry.org/debian/cli.cloudfoundry.org.key | sudo apt-key add -
         echo "deb https://packages.cloudfoundry.org/debian stable main" | sudo tee /etc/apt/sources.list.d/cloudfoundry-cli.list
         sudo apt update
         sudo apt install cf8-cli
-        # Install MTA plugin
+
+    - name: Install MTA plugin
+      run: |
         cf add-plugin-repo CF-Community https://plugins.cloudfoundry.org
         cf install-plugin -f -r CF-Community "multiapps"
-    
-        # Verify installation
-        cf plugins
+        cf plugins  # Verify plugin installation
 
     - name: Deploy to Cloud Foundry
       env:
@@ -50,5 +54,11 @@ jobs:
         CF_USERNAME: ${{ secrets.CF_USERNAME }}
         CF_PASSWORD: ${{ secrets.CF_PASSWORD }}
       run: |
+        echo "Logging in to Cloud Foundry..."
         cf login -a "$CF_API" -u "$CF_USERNAME" -p "$CF_PASSWORD" -o "$CF_ORG" -s "$CF_SPACE"
-        cf deploy mta_archives/*.mtar
+        
+        echo "Deploying MTA archive..."
+        cf deploy mta_archives/app.mtar -f
+        
+        echo "Checking deployment status..."
+        cf apps
