@@ -14,7 +14,6 @@ modules:
       commands:
         - npm install
         - npm run build
-      supported-platforms: []
 
   - name: srv
     type: nodejs
@@ -22,6 +21,11 @@ modules:
     parameters:
       disk-quota: 256M
       memory: 256M
+    build-parameters:
+      builder: npm
+      commands:
+        - npm install
+        - npm run build
     requires:
       - name: livestore-uaa
       - name: livestore-db
@@ -32,7 +36,6 @@ resources:
     parameters:
       service: xsuaa
       service-plan: application
-      path: ./xs-security.json
 
   - name: livestore-db
     type: org.cloudfoundry.managed-service
